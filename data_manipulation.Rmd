@@ -33,121 +33,132 @@ litters_data = janitor::clean_names(litters_data)
 names(litters_data)
 ```
 
-## viewing data
 
 ```{r}
-# litters_data
-# tail(litters_data, 5) # last 5
-# head(litters_data, 5) # fisrt 5
-# view(litters_data) # opens separate tab with data table, make sure commented when knitting
-# str(litters_data) # puts all columns into lists
-skimr::skim(litters_data) # creates data summary and shows simple hist for each var
+
+pups_data = read_csv(file = "data_import_examples/FAS_pups.csv")
+pups_data = janitor::clean_names(pups_data) 
+pups_data
 
 ```
 
-## arguments in 'read_csv'
+## select function
 
 ```{r}
 
-litters_df = read_csv("data_import_examples/FAS_litters.csv",
-                      skip = 5,
-                      col_names = FALSE,
-                      na = "Low8") #  replace missing data w na
+# select(litters_data, group, litter_number)
+# 
+# select(litters_data, group, gd0_weight, gd18_weight)
+# 
+# select(litters_data, group, gd0_weight:gd_of_birth)
+# select(litters_data, group, starts_with("pups")) # starts_with, ends_with, contains
+# 
+# select(litters_data, -litter_number)
 
-litters_df
+select(litters_data, GROUP= group, litter_number)
+
+rename(litters_data, GGROUP = group)
+
+select(litters_data, litter_number, everything())
+
+relocate(litters_data, litter_number)
+
 ```
 
-## Parsing columns
+```{r}
+
+select(pups_data, litter_number, sex, pd_ears)
+```
+
+```{r}
+pull(litters_data, group)
+```
+
+
+## filter
 
 ```{r}
 
-litters_data = read_csv(file = "data_import_examples//FAS_litters.csv",
-  col_types = cols(
-    Group = col_character(),
-    `Litter Number` = col_character(),
-    `GD0 weight` = col_double(),
-    `GD18 weight` = col_double(),
-    `GD of Birth` = col_integer(),
-    `Pups born alive` = col_integer(),
-    `Pups dead @ birth` = col_integer(),
-    `Pups survive` = col_integer()
-  ) # specify column types
+filter(litters_data, group == 'Con7')
+
+filter(litters_data,gd0_weight < 21)
+
+
+filter(litters_data,pups_survive != 4)
+
+filter(litters_data,!(group == 'Con7'))
+
+filter(litters_data, group %in% c("Con7","Con8"))
+
+filter(litters_data, group == 'Con7', gd_of_birth == 20) # and
+
+filter(litters_data, group == 'Con7' | gd_of_birth == 20) # or
+
+drop_na(litters_data,gd0_weight)
+
+```
+
+## mutate
+
+```{r}
+
+
+mutate(litters_data, weight_change = gd18_weight - gd0_weight) #  define new var off other columns
+
+mutate(
+  litters_data,
+  weight_change = gd18_weight - gd0_weight,
+  group = str_to_lower(group)
 )
 
-# short hand for specifying col types
-# litters_data = read_csv(file = "./data/FAS_litters.csv",
-#   col_types = "ccddiiii"
-# )
-
-tail(litters_data)
-
 
 ```
 
-## other file formats
 
-## read_csv (tibbles) better than read.csv
+## arrange
 
 ```{r}
 
-library(readxl)
+arrange(litters_data, desc(gd0_weight))
 
-mlb11_data = read_excel("data_import_examples/mlb11.xlsx", n_max = 20)
-head(mlb11_data, 20)
-
-```
-## only load in certain part of Excel file
-```{r}
-
-fellow_df = read_excel("data_import_examples/LotR_Words.xlsx", range = "B3:D6")
-fellow_df
-```
-
-
-
-```{r, eval = FALSE}
-
-library(haven)
-
-pulse_data = read_sas("data_import_examples/public_pulse_data.sas7bdat")
-head(pulse_data, 5)
+arrange(litters_data, gd_of_birth, gd0_weight)
 
 ```
 
-
-
-## Exporting data
+## pipes
 
 ```{r}
 
-write_csv(fellow_df, "data_import_examples/fellowship_words.csv")
+litters_data_raw = read_csv("data_import_examples/FAS_litters.csv")
+litters_clean_name = janitor::clean_names(litters_data_raw)
+litters_select = select(litters_clean_name, group, pups_survive)
+litters_filtered = filter(litters_select, group == "Con7")
 
 ```
 
 ```{r}
 
-dbinom(2,5,0.6)
+litters_df = 
+  read_csv("data_import_examples/FAS_litters.csv")  %>%
+  janitor::clean_names() %>%
+  select(group, pups_survive) %>%
+  filter(group == "Con7")
 
 ```
-
 
 ```{r}
 
-ppois(1,4)
+# not as clean:
+
+# litters_df2 = 
+#   filter(
+#     select(
+#       janitor::clean_names(
+#         read_csv("data_import_examples/FAS_litters.csv")), 
+#       group, pups_survive), 
+#     group == "Con7")
 
 ```
 
 
 
-Now, calculate the probability that at least 10 infants have asthma from a sample of 20.
-
-P(X >= 10) = 1 - P(X <= 9)
-
-
-P(X >= 4) = 1 - P(X <= 3)
-
-```{r}
-
-1 - pbinom(3, 5, 0.6)
-
-```
