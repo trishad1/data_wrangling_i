@@ -1,153 +1,66 @@
 ---
-title: "Simple document"
+title: "Tidying data"
 output: github_document
 ---
 
 ```{r, echo = FALSE, message=FALSE}
 library(tidyverse)
+library(readxl)
+library(haven)
 ```
 
-## import data, FAS_litters.csv
+## pivot longer
 
 ```{r}
 
-litters_data = read_csv(file = "data_import_examples/FAS_litters.csv")
+pulse_df = 
+  haven::read_sas("data_import_examples/public_pulse_data.sas7bdat") %>%
+  janitor::clean_names()
 
-litters_data
+pulse_df
+
+```
+```{r}
+pulse_tidy = 
+  pulse_df %>%
+  pivot_longer(
+    bdi_score_bl:bdi_score_12m,
+    names_to="visit",
+    names_prefix = "bdi_score_",
+    values_to="bdi"
+  ) %>%
+  relocate(visit) %>%
+  mutate(
+    visit = replace(visit, visit == "bl", "00m"),
+    visit = factor(visit)
+  ) %>%
+  arrange(id, visit)
+
+pulse_tidy
 
 ```
 
-## cleaning variable names imported
-
-```{r}
-names(litters_data)
-## [1] "Group"             "Litter Number"     "GD0 weight"       
-## [4] "GD18 weight"       "GD of Birth"       "Pups born alive"  
-## [7] "Pups dead @ birth" "Pups survive"
-
-
-# cleans variables and turns  them into lower snake case
-# useful for tidying  variable names of imported csv
-litters_data = janitor::clean_names(litters_data) 
-
-names(litters_data)
-```
-
-## viewing data
-
-```{r}
-# litters_data
-# tail(litters_data, 5) # last 5
-# head(litters_data, 5) # fisrt 5
-# view(litters_data) # opens separate tab with data table, make sure commented when knitting
-# str(litters_data) # puts all columns into lists
-skimr::skim(litters_data) # creates data summary and shows simple hist for each var
-
-```
-
-## arguments in 'read_csv'
+# pivot wider
 
 ```{r}
 
-litters_df = read_csv("data_import_examples/FAS_litters.csv",
-                      skip = 5,
-                      col_names = FALSE,
-                      na = "Low8") #  replace missing data w na
-
-litters_df
-```
-
-## Parsing columns
-
-```{r}
-
-litters_data = read_csv(file = "data_import_examples//FAS_litters.csv",
-  col_types = cols(
-    Group = col_character(),
-    `Litter Number` = col_character(),
-    `GD0 weight` = col_double(),
-    `GD18 weight` = col_double(),
-    `GD of Birth` = col_integer(),
-    `Pups born alive` = col_integer(),
-    `Pups dead @ birth` = col_integer(),
-    `Pups survive` = col_integer()
-  ) # specify column types
+analysis_df = tibble(
+  group = c("treatment", "treatment", "control", "control"),
+  time = c("a", "b", "a", "b"),
+  group_mean = c(4, 8, 3, 6)
 )
 
-# short hand for specifying col types
-# litters_data = read_csv(file = "./data/FAS_litters.csv",
-#   col_types = "ccddiiii"
-# )
+analysis_df %>%
+  pivot_wider(
+    names_from = "time",
+    values_from = "group_mean"
+  ) %>%
+  knitr::kable()
 
-tail(litters_data)
-
-
-```
-
-## other file formats
-
-## read_csv (tibbles) better than read.csv
-
-```{r}
-
-library(readxl)
-
-mlb11_data = read_excel("data_import_examples/mlb11.xlsx", n_max = 20)
-head(mlb11_data, 20)
-
-```
-## only load in certain part of Excel file
-```{r}
-
-fellow_df = read_excel("data_import_examples/LotR_Words.xlsx", range = "B3:D6")
-fellow_df
-```
-
-
-
-```{r, eval = FALSE}
-
-library(haven)
-
-pulse_data = read_sas("data_import_examples/public_pulse_data.sas7bdat")
-head(pulse_data, 5)
 
 ```
 
 
 
-## Exporting data
-
-```{r}
-
-write_csv(fellow_df, "data_import_examples/fellowship_words.csv")
-
-```
-
-```{r}
-
-dbinom(2,5,0.6)
-
-```
 
 
-```{r}
-
-ppois(1,4)
-
-```
-
-
-
-Now, calculate the probability that at least 10 infants have asthma from a sample of 20.
-
-P(X >= 10) = 1 - P(X <= 9)
-
-
-P(X >= 4) = 1 - P(X <= 3)
-
-```{r}
-
-1 - pbinom(3, 5, 0.6)
-
-```

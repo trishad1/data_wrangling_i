@@ -238,3 +238,9 @@ library(haven)
 pulse_data = read_sas("data_import_examples/public_pulse_data.sas7bdat")
 head(pulse_data, 5)
 ```
+
+## Exporting data
+
+``` r
+write_csv(fellow_df, "data_import_examples/fellowship_words.csv")
+```
